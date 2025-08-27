@@ -38,29 +38,34 @@ def load_plans_from_csv(db: Session, file_path: str):
     db.commit()
 
 def load_credits_from_csv(db: Session, file_path: str):
-    df = pd.read_csv(file_path, sep='\t', dayfirst=True, parse_dates=['issuance_date', 'return_date', 'actual_return_date'])
-    for _, row in df.iterrows():
-        credit = models.Credit(
+    df = pd.read_csv(file_path, sep='\t', dayfirst=True,
+                     parse_dates=['issuance_date', 'return_date', 'actual_return_date'])
+    credits = [
+        models.Credit(
             id=row['id'],
             user_id=row['user_id'],
-            issuance_date=pd.to_datetime(row['issuance_date']).date(),
-            return_date=pd.to_datetime(row['return_date']).date() if pd.notna(row['return_date']) else None,
-            actual_return_date=pd.to_datetime(row['actual_return_date']).date() if pd.notna(row['actual_return_date']) else None,
+            issuance_date=row['issuance_date'].date(),
+            return_date=row['return_date'].date() if pd.notna(row['return_date']) else None,
+            actual_return_date=row['actual_return_date'].date() if pd.notna(row['actual_return_date']) else None,
             body=row['body'],
             percent=row['percent']
         )
-        db.add(credit)
+        for _, row in df.iterrows()
+    ]
+    db.bulk_save_objects(credits)
     db.commit()
 
 def load_payments_from_csv(db: Session, file_path: str):
-    df = pd.read_csv(file_path, sep='\t', dayfirst=True)
-    for _, row in df.iterrows():
-        payment = models.Payment(
+    df = pd.read_csv(file_path, sep='\t', dayfirst=True, parse_dates=['payment_date'])
+    payments = [
+        models.Payment(
             id=row['id'],
             credit_id=row['credit_id'],
-            payment_date=pd.to_datetime(row['payment_date']).date(),
+            payment_date=row['payment_date'].date(),
             type_id=row['type_id'],
             sum=row['sum']
         )
-        db.add(payment)
+        for _, row in df.iterrows()
+    ]
+    db.bulk_save_objects(payments)
     db.commit()
