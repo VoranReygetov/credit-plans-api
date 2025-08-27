@@ -26,11 +26,11 @@ def load_dictionary_from_csv(db: Session, file_path: str):
     db.commit()
 
 def load_plans_from_csv(db: Session, file_path: str):
-    df = pd.read_csv(file_path, sep='\t', dayfirst=True)
+    df = pd.read_csv(file_path, sep='\t')
     for _, row in df.iterrows():
         plan = models.Plan(
             id=row['id'],
-            period=pd.to_datetime(row['period']).date(),
+            period=pd.to_datetime(str(row["period"]), dayfirst=True).date(),
             sum=row['sum'],
             category_id=row['category_id']
         )

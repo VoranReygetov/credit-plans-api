@@ -1,14 +1,20 @@
-from fastapi import APIRouter, UploadFile, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, HTTPException, Depends, File
 from sqlalchemy.orm import Session
 from database import get_db
-from crud import insert_plans_from_df
+from crud import insert_plans_from_df, get_plans_performance
 import pandas as pd
 from io import BytesIO
+from datetime import datetime
+from schemas import PlanPerformanceOut
+
 
 router = APIRouter(prefix="", tags=["default"])
 
 @router.post("/plans_insert")
-async def plans_insert(file: UploadFile, db: Session = Depends(get_db)):
+async def plans_insert(
+    file: UploadFile = File(..., description="Excel file with plans (.xlsx)"),
+    db: Session = Depends(get_db)
+):
     
     if not file.filename.endswith(".xlsx"):
         raise HTTPException(status_code=400, detail="Only Excel (.xlsx) files are allowed")
@@ -26,3 +32,9 @@ async def plans_insert(file: UploadFile, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=str(e))
 
     return {"message": f"Successfully inserted {inserted_count} plans"}
+
+
+@router.get("/plans_performance", response_model=list[PlanPerformanceOut])
+def plans_performance(check_date: str, db: Session = Depends(get_db)):
+    check_date_parsed = datetime.strptime(check_date, "%d/%m/%Y").date()
+    return get_plans_performance(db, check_date_parsed)

@@ -18,3 +18,11 @@ class CreditInfo(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class PlanPerformanceOut(BaseModel):
+    month: str
+    category: str
+    planned_sum: float
+    actual_sum: float
+    percent_completion: float
