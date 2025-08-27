@@ -10,7 +10,6 @@ Implemented with **FastAPI**, **SQLAlchemy**, and **MySQL**.
 - FastAPI
 - SQLAlchemy
 - MySQL
-- Alembic (migrations)
 - Pandas (CSV/Excel processing)
 
 ## API Endpoints
