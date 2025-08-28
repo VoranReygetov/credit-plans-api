@@ -28,7 +28,7 @@ no duplicate month + category
 
 no empty "sum" values
 
-*GET /plans_performance?date=YYYY-MM-DD*
+*GET /plans_performance?date=DD/MM/YYYY*
 
 Get plan performance up to a specific date:
 
