@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
-from datetime import date
-from schemas import CreditInfo, PlanPerformanceOut
+from datetime import date, timedelta
+from schemas import CreditInfo, PlanPerformanceOut, YearPerformanceOut
 import pandas as pd
-from sqlalchemy import func
+from sqlalchemy import func, extract
 from models import Plan, Credit, Payment, Dictionary, User
 
 def get_user_credits(db: Session, user_id: int) -> list[CreditInfo]:
@@ -122,5 +122,64 @@ def get_plans_performance(db: Session, check_date: date):
             percent_completion=percent_completion
         ))
 
+
+    return results
+
+
+def get_year_performance(db: Session, year: int):
+
+    # Get all plans for the given year
+    plans = db.query(Plan).filter(
+        extract("year", Plan.period) == year
+    ).all()
+
+    # Get all credits issued in the given year
+    credits = db.query(Credit).filter(
+        extract("year", Credit.issuance_date) == year
+    ).all()
+
+    # Get all payments made in the given year
+    payments = db.query(Payment).filter(
+        extract("year", Payment.payment_date) == year
+    ).all()
+
+    # Calculate total sums for the entire year
+    total_credits_sum = sum(c.body for c in credits)
+    total_payments_sum = sum(p.sum for p in payments)
+
+    results = []
+    for month in range(1, 12 + 1):
+        # Get start and end date for the current month
+        month_start = date(year, month, 1)
+        month_end = (month_start.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+
+        # Select plans for the current month
+        month_plans = [p for p in plans if p.period.month == month]
+
+        # Planned amounts (by category)
+        planned_credits_sum = sum(p.sum for p in month_plans if p.category_id == 3)  # "Видача"
+        planned_payments_sum = sum(p.sum for p in month_plans if p.category_id == 4)  # "Збір"
+
+        # Actual credits and payments for the current month
+        month_credits = [c for c in credits if month_start <= c.issuance_date <= month_end]
+        month_payments = [p for p in payments if month_start <= p.payment_date <= month_end]
+
+        actual_credits_sum = sum(c.body for c in month_credits)
+        actual_payments_sum = sum(p.sum for p in month_payments)
+
+        # Build monthly result entry
+        results.append(YearPerformanceOut(
+            month=f"{year}-{month:02d}",
+            credits_count=len(month_credits),
+            planned_credits_sum=float(planned_credits_sum),
+            actual_credits_sum=float(actual_credits_sum),
+            credits_completion_percent=round((actual_credits_sum / planned_credits_sum * 100), 2) if planned_credits_sum else 0,
+            payments_count=len(month_payments),
+            planned_payments_sum=float(planned_payments_sum),
+            actual_payments_sum=float(actual_payments_sum),
+            payments_completion_percent=round((actual_payments_sum / planned_payments_sum * 100), 2) if planned_payments_sum else 0,
+            month_credits_share_percent=round((actual_credits_sum / total_credits_sum * 100), 2) if total_credits_sum else 0,
+            month_payments_share_percent=round((actual_payments_sum / total_payments_sum * 100), 2) if total_payments_sum else 0,
+        ))
 
     return results

@@ -21,8 +21,24 @@ class CreditInfo(BaseModel):
 
 
 class PlanPerformanceOut(BaseModel):
+    """Plan performance of the month by a day"""
     month: str
     category: str
     planned_sum: float
     actual_sum: float
     percent_completion: float
+
+
+class YearPerformanceOut(BaseModel):
+    """Year performance by every month"""
+    month: str
+    credits_count: int
+    planned_credits_sum: float
+    actual_credits_sum: float
+    credits_completion_percent: float
+    payments_count: int
+    planned_payments_sum: float
+    actual_payments_sum: float
+    payments_completion_percent: float
+    month_credits_share_percent: float
+    month_payments_share_percent: float
