@@ -57,7 +57,7 @@ def insert_plans_from_df(db: Session, df: pd.DataFrame):
     for _, row in df.iterrows():
         # Validate date
         period = pd.to_datetime(str(row["period"]), dayfirst=True).date()
-        print(period, period.day)
+
         if period.day != 1:
             raise ValueError(f"Plan period {period} must be the first day of the month")
 

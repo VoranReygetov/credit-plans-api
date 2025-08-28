@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, HTTPException, Depends, File
+from fastapi import APIRouter, UploadFile, HTTPException, Depends, File, Query
 from sqlalchemy.orm import Session
 from database import get_db
 from crud import insert_plans_from_df, get_plans_performance, get_year_performance
@@ -35,7 +35,7 @@ async def plans_insert(
 
 
 @router.get("/plans_performance", response_model=list[PlanPerformanceOut])
-def plans_performance(check_date: str, db: Session = Depends(get_db)):
+def plans_performance(check_date: str = Query(..., description="Date in format dd/mm/yyyy"), db: Session = Depends(get_db)):
     check_date_parsed = datetime.strptime(check_date, "%d/%m/%Y").date()
     return get_plans_performance(db, check_date_parsed)
 
